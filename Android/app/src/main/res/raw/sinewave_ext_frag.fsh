@@ -10,7 +10,6 @@ uniform lowp vec3 rgbCoeff;
 uniform float Zoom;
 uniform float WaveIncrement;
 uniform float Offset;
-uniform int Mode;
 
 uniform vec2 scale;
 uniform vec2 offset;
@@ -26,9 +25,7 @@ void main()
 
     if(pDir != 0)
     {
-        float y= texCoordinate.y;
-        if(Mode == 0)
-            y = (1.0-y);
+        float y= 1.0 - texCoordinate.y;
 
         float ScreenX = 1.0 + sin((y*WaveIncrement+Offset)*delta)*Zoom-Zoom;
         posTex = texCoordinate * vec2(ScreenX, 1.0) + vec2((1.0-ScreenX)/2.0, 0.0);
