@@ -193,12 +193,12 @@ public class CRunPerspective extends CRunExtension {
         synchronized (imageTexture) { synchronized (GLRenderer.inst) {
             GLRenderer.inst.pushClip(objX, objY, objWidth, objHeight);
 
+            int objSize = Direction == HORIZONTAL ? objHeight : objWidth;
+
             if (Effect == PANORAMA) {
                 GLRenderer.inst.setEffectShader(panoShader);
                 
                 if (!oncePano) {
-                    int objSize = Direction == HORIZONTAL ? objHeight : objWidth;
-
                     GLRenderer.inst.updateVariable1f("fB", Math.max(1.0f, (float)(objSize - ZoomValue)) / Math.max(1.0f, (float)objSize));
                     GLRenderer.inst.updateVariable1i("pDir", Direction);
                     oncePano = true;
@@ -228,10 +228,9 @@ public class CRunPerspective extends CRunExtension {
                 GLRenderer.inst.setEffectShader(sineShader);
 
                 if (!onceSine) {
-                    int objSize1 = Direction == HORIZONTAL ? objHeight : objWidth;
                     int objSize2 = Direction == HORIZONTAL ? objWidth : objHeight;
 
-                    GLRenderer.inst.updateVariable1f("Zoom", (float) ZoomValue / (float) objSize1);
+                    GLRenderer.inst.updateVariable1f("Zoom", (float) ZoomValue / (float) objSize);
                     GLRenderer.inst.updateVariable1f("WaveIncrement", ((float) (SineWaveWaves * 360) / (float) objHeight) * (float) objSize2);
                     GLRenderer.inst.updateVariable1f("Offset", (float) Offset);
                     GLRenderer.inst.updateVariable1i("pDir", Direction);
@@ -242,8 +241,6 @@ public class CRunPerspective extends CRunExtension {
                 GLRenderer.inst.setEffectShader(offsShader);
 
                 if (!onceOffs) {
-                    int objSize = Direction == HORIZONTAL ? objHeight : objWidth;
-
                     GLRenderer.inst.updateVariable1f("Zoom", (float) ZoomValue / (float) objHeight);
                     GLRenderer.inst.updateVariable1f("WaveIncrement", ((float) (SineWaveWaves * 360) / (float) objHeight) * (float) objSize);
                     GLRenderer.inst.updateVariable1f("Offset", (float) Offset);
@@ -261,30 +258,6 @@ public class CRunPerspective extends CRunExtension {
 
     /* access modifiers changed from: package-private */
     public double[] LeftBottonSlope(int zoom, int width, int height, int direction) {
-        /*int i5;
-        double[] dArr = {0.0d, 0.0d};
-        int i6 = 0;
-        if (direction == 0) {
-            int i7 = 0;
-            i5 = 0;
-            while (i7 <= width) {
-                double d = (double) height;
-                dArr[i5] = ((d / (((double) (((i7 * zoom) / width) + height)) / d)) + 0.5d) / d;
-                i7 += width;
-                i5++;
-            }
-        } else {
-            i5 = 0;
-        }
-        if (direction == 1) {
-            while (i6 <= height) {
-                double d2 = (double) width;
-                dArr[i5] = ((d2 / (((double) (((i6 * zoom) / height) + width)) / d2)) + 0.5d) / d2;
-                i6 += height;
-                i5++;
-            }
-        }
-        return dArr;*/
         double[] slope = { 0.0, 0.0 };
 
         switch (direction) {
@@ -303,30 +276,6 @@ public class CRunPerspective extends CRunExtension {
 
     /* access modifiers changed from: package-private */
     public double[] RightTopSlope(int zoom, int width, int height, int direction) {
-        /*int i5;
-        double[] dArr = {0.0d, 0.0d};
-        int i6 = 0;
-        if (direction == 0) {
-            int i7 = 0;
-            i5 = 0;
-            while (i7 <= width) {
-                double d = height;
-                dArr[i5] = ((d / (((double) ((((width - i7) * zoom) / width) + height)) / d)) + 0.5d) / d;
-                i7 += width;
-                i5++;
-            }
-        } else {
-            i5 = 0;
-        }
-        if (direction == 1) {
-            while (i6 <= height) {
-                double d2 = width;
-                dArr[i5] = ((d2 / (((double) ((((height - i6) * zoom) / height) + width)) / d2)) + 0.5d) / d2;
-                i6 += height;
-                i5++;
-            }
-        }
-        return dArr;*/
         double[] slope = { 0.0, 0.0 };
 
         switch (direction) {
@@ -336,7 +285,7 @@ public class CRunPerspective extends CRunExtension {
                 break;
             case VERTICAL:
                 slope[0] = (((double) width / ((double) (zoom + width) / (double) width)) + 0.5) / (double) width;
-                slope[0] = ((double) width + 0.5) / (double) width;
+                slope[1] = ((double) width + 0.5) / (double) width;
                 break;
         }
 
