@@ -61,22 +61,23 @@ public class CRunPerspective extends CRunExtension {
     private static int sineShader = -1;
     private static int offsShader = -1;
 
-    private int[] CustomArray;
-    private int Direction;
     private int Effect;
-    private int Offset;
+    private int Direction;
     private int PerspectiveDir;
-    private int SineWaveWaves;
     private int ZoomValue;
-    public CValue expRet = new CValue(0);
+    private int Offset;
+    private int SineWaveWaves;
+    private int[] CustomArray;
+    private boolean resample;
+
     private CImage imageTexture;
-    private boolean oldResample;
     private boolean onceOffs;
     private boolean oncePano;
     private boolean oncePers;
     private boolean onceSine;
     private boolean paused;
-    private boolean resample;
+
+    public CValue expRet = new CValue(0);
 
     @Override // Extensions.CRunExtension
     public int getNumberOfConditions() {
@@ -119,7 +120,6 @@ public class CRunPerspective extends CRunExtension {
         this.PerspectiveDir = cBinaryFile.readByte() != 0 ? LEFTBOTTOM : RIGHTTOP;
         this.resample = cBinaryFile.readByte() != 0;
         this.ho.roc.rcChanged = true;
-        this.oldResample = (MMFRuntime.inst.app.hdr2Options & CRunApp.AH2OPT_ANTIALIASED) != 0;
         int i2 = this.Direction == 0 ? this.ho.hoImgWidth : this.ho.hoImgHeight;
         this.CustomArray = new int[i2];
         for (int i3 = 0; i3 < i2; i3++) {
@@ -411,7 +411,8 @@ public class CRunPerspective extends CRunExtension {
 
     private void actSetNumWaves(CActExtension cActExtension) {
         this.SineWaveWaves = cActExtension.getParamExpression(this.rh, 0);
-        this.onceSine = false;
+        onceSine = false;
+        onceOffs = false;
         this.ho.roc.rcChanged = true;
     }
 
@@ -423,25 +424,37 @@ public class CRunPerspective extends CRunExtension {
     }
 
     private void actSetHorizontal(CActExtension cActExtension) {
-        int i = this.Direction == HORIZONTAL ? this.ho.hoImgWidth : this.ho.hoImgHeight;
-        int i2 = this.ho.hoImgWidth;
+        if (Direction == VERTICAL) {
+            int customSize = Math.min(ho.hoImgHeight, ho.hoImgWidth);
+            int[] newCustom = new int[ho.hoImgWidth];
+
+            if (customSize >= 0) System.arraycopy(CustomArray, 0, newCustom, 0, customSize);
+            CustomArray = newCustom;
+        }
+
         this.Direction = HORIZONTAL;
+        oncePano = false;
+        oncePers = false;
+        onceSine = false;
+        onceOffs = false;
         this.ho.roc.rcChanged = true;
-        int min = Math.min(i, i2);
-        int[] iArr = new int[i2];
-        if (min >= 0) System.arraycopy(this.CustomArray, 0, iArr, 0, min);
-        this.CustomArray = iArr;
     }
 
     private void actSetVertical(CActExtension cActExtension) {
-        int i = this.Direction == 0 ? this.ho.hoImgWidth : this.ho.hoImgHeight;
-        int i2 = this.ho.hoImgHeight;
-        this.Direction = 1;
+        if (Direction == HORIZONTAL) {
+            int customSize = Math.min(ho.hoImgWidth, ho.hoImgHeight);
+            int[] newCustom = new int[ho.hoImgHeight];
+
+            if (customSize >= 0) System.arraycopy(CustomArray, 0, newCustom, 0, customSize);
+            CustomArray = newCustom;
+        }
+
+        this.Direction = VERTICAL;
+        oncePano = false;
+        oncePers = false;
+        onceSine = false;
+        onceOffs = false;
         this.ho.roc.rcChanged = true;
-        int min = Math.min(i, i2);
-        int[] iArr = new int[i2];
-        if (min >= 0) System.arraycopy(this.CustomArray, 0, iArr, 0, min);
-        this.CustomArray = iArr;
     }
 
     private void actSetLeftTop(CActExtension cActExtension) {
@@ -477,22 +490,12 @@ public class CRunPerspective extends CRunExtension {
     }
 
     private void actSetResampleOn(CActExtension cActExtension) {
-        CImage cImage;
         this.resample = true;
-        if (!(this.oldResample || (cImage = this.imageTexture) == null)) {
-            this.oldResample = true;
-            cImage.setResampling(true);
-        }
         this.ho.roc.rcChanged = true;
     }
 
     private void actSetResampleOff(CActExtension cActExtension) {
-        CImage cImage;
         this.resample = false;
-        if (this.oldResample && (cImage = this.imageTexture) != null) {
-            this.oldResample = false;
-            cImage.setResampling(false);
-        }
         this.ho.roc.rcChanged = true;
     }
 
