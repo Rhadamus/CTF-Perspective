@@ -11,8 +11,6 @@ uniform float Zoom;
 uniform float WaveIncrement;
 uniform float Offset;
 
-uniform vec2 scale;
-uniform vec2 offset;
 uniform int pDir;
 
 #define delta 3.141592/180.0
@@ -27,7 +25,7 @@ void main()
         mediump float y = 1.0 - texCoordinate.y;
 
         float ScreenX = 1.0 + sin((y*WaveIncrement+Offset)*delta)*Zoom;
-        posTex = (texCoordinate + vec2((1.0-ScreenX)/2.0, 0.0))*scale+offset;
+        posTex = (texCoordinate + vec2((1.0-ScreenX)/2.0, 0.0));
         color = texture2D(texture, posTex);
     }
     else
@@ -35,7 +33,7 @@ void main()
         mediump float x = texCoordinate.x*WaveIncrement+Offset;
 
         float ScreenY = 1.0 - sin(x*delta)*Zoom;
-        posTex = (texCoordinate+ vec2(0.0, (2.0-2.0*ScreenY)/2.0))*scale+offset;
+        posTex = (texCoordinate+ vec2(0.0, (2.0-2.0*ScreenY)/2.0));
         color = texture2D(texture, posTex);
     }
     color = color * vec4(rgbCoeff, inkParam);

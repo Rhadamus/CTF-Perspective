@@ -10,8 +10,6 @@ uniform lowp vec3 rgbCoeff;
 uniform float fA;
 uniform float fB;
 
-uniform vec2 scale;
-uniform vec2 offset;
 uniform int pDir;
 
 void main()
@@ -23,13 +21,13 @@ void main()
 	{
     	float ScreenX = (fA-(fA-fB)*(1.0-texCoordinate.y));
 		posTex = texCoordinate * vec2(ScreenX, 1.0) + vec2((1.0-ScreenX)/2.0, 0.0);
-		color = texture2D(texture, posTex*scale+offset);
+		color = texture2D(texture, posTex);
 	}
 	else
 	{
 		float ScreenY = (fA-(fA-fB)*texCoordinate.x);
 		posTex = texCoordinate * vec2(1.0, ScreenY) + vec2(0.0, (1.0-ScreenY)/2.0);
-		color = texture2D(texture, posTex*scale+offset);
+		color = texture2D(texture, posTex);
 	}
 	color = color * vec4(rgbCoeff, inkParam);
 

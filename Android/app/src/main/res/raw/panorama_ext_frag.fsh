@@ -6,8 +6,6 @@ uniform lowp int inkEffect;
 uniform lowp vec3 rgbCoeff;
 
 uniform float fB;
-uniform vec2 scale;
-uniform vec2 offset;
 uniform lowp int pDir;
 
 varying mediump vec2 texCoordinate;
@@ -23,14 +21,14 @@ void main()
 	{
 		fC =  max(0.02, 1.0+(fB - 1.0)*4.0*pow((texCoordinate.s-0.5),2.0));
 		posTex = texCoordinate * vec2(1.0, fC) + vec2(0.0, (1.0-fC)/2.0);
-		color = texture2D(texture, posTex*scale+offset) * vec4(rgbCoeff, inkParam);
+		color = texture2D(texture, posTex) * vec4(rgbCoeff, inkParam);
 	}
 	
 	if(pDir == 1)
 	{
 		fC =  max(0.05, 1.0+(fB - 1.0)*4.0*pow((texCoordinate.t-0.5),2.0));
 		posTex = texCoordinate * vec2(fC, 1.0) + vec2((1.0-fC)/2.0, 0.0);
-		color = texture2D(texture, posTex*scale+offset) * vec4(rgbCoeff, inkParam);
+		color = texture2D(texture, posTex) * vec4(rgbCoeff, inkParam);
 	}
 		
 	//color = texture2D(texture, posTex) * vec4(rgbCoeff, inkParam);

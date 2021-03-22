@@ -1,6 +1,7 @@
 package Extensions;
 
 import Actions.CActExtension;
+import Application.CRunApp;
 import Banks.CImage;
 import Conditions.CCndExtension;
 import Expressions.CValue;
@@ -55,6 +56,11 @@ public class CRunPerspective extends CRunExtension {
     public static final int LEFTBOTTOM = 0;
     public static final int RIGHTTOP = 1;
 
+    private static int panoShader = -1;
+    private static int persShader = -1;
+    private static int sineShader = -1;
+    private static int offsShader = -1;
+
     private int[] CustomArray;
     private int Direction;
     private int Effect;
@@ -62,10 +68,8 @@ public class CRunPerspective extends CRunExtension {
     private int PerspectiveDir;
     private int SineWaveWaves;
     private int ZoomValue;
-    private boolean bRemoveShader;
     public CValue expRet = new CValue(0);
     private CImage imageTexture;
-    private int indexShader;
     private boolean oldResample;
     private boolean onceOffs;
     private boolean oncePano;
@@ -115,7 +119,7 @@ public class CRunPerspective extends CRunExtension {
         this.PerspectiveDir = cBinaryFile.readByte() != 0 ? LEFTBOTTOM : RIGHTTOP;
         this.resample = cBinaryFile.readByte() != 0;
         this.ho.roc.rcChanged = true;
-        this.oldResample = (MMFRuntime.inst.app.hdr2Options & 4096) != 0;
+        this.oldResample = (MMFRuntime.inst.app.hdr2Options & CRunApp.AH2OPT_ANTIALIASED) != 0;
         int i2 = this.Direction == 0 ? this.ho.hoImgWidth : this.ho.hoImgHeight;
         this.CustomArray = new int[i2];
         for (int i3 = 0; i3 < i2; i3++) {
@@ -123,12 +127,10 @@ public class CRunPerspective extends CRunExtension {
         }
         this.imageTexture = new CImageTexture(this.ho.hoImgWidth, this.ho.hoImgHeight);
         this.paused = false;
-        this.indexShader = -1;
         this.oncePers = false;
         this.oncePano = false;
         this.onceSine = false;
         this.onceOffs = false;
-        this.bRemoveShader = false;
         return true;
     }
 
@@ -147,15 +149,18 @@ public class CRunPerspective extends CRunExtension {
     @Override // Extensions.CRunExtension
     public void destroyRunObject(boolean z) {
         this.CustomArray = null;
-        CImage cImage = this.imageTexture;
-        if (cImage != null) {
-            cImage.destroy();
-        }
-        if (this.indexShader > 0 && GLRenderer.inst != null) {
-            synchronized (GLRenderer.inst) {
-                GLRenderer.inst.removeShader(this.indexShader);
-            }
-        }
+
+        if (imageTexture != null) imageTexture.destroy();
+    }
+
+    @Override
+    public void onStop() {
+        if (GLRenderer.inst != null) { synchronized (GLRenderer.inst) {
+            if (panoShader > 0) GLRenderer.inst.removeShader(panoShader);
+            if (persShader > 0) GLRenderer.inst.removeShader(persShader);
+            if (sineShader > 0) GLRenderer.inst.removeShader(sineShader);
+            if (offsShader > 0) GLRenderer.inst.removeShader(offsShader);
+        } }
     }
 
     /* JADX DEBUG: Multi-variable search result rejected for r2v10, resolved type: boolean */
@@ -165,92 +170,47 @@ public class CRunPerspective extends CRunExtension {
     /* JADX WARNING: Removed duplicated region for block: B:175:0x02f1  */
     @Override // Extensions.CRunExtension
     public void displayRunObject() {
-        if (paused || ho.hoImgWidth == 0 || ho.hoImgHeight == 0) {
+        if (paused || ho.hoImgWidth == 0 || ho.hoImgHeight == 0 || (ho.ros.rsFlags & CRSpr.RSFLAG_VISIBLE) == 0) {
             return;
         }
 
-        if (bRemoveShader && indexShader != -1) {
-            bRemoveShader = false;
-            GLRenderer.inst.removeShader(indexShader);
-            indexShader = -1;
-            oncePers = false;
-            oncePano = false;
-            onceSine = false;
-            onceOffs = false;
-        }
-
-        if (indexShader == -1) {
-            switch (Effect) {
-                case PANORAMA:
-                    indexShader = GLRenderer.inst.addShaderFromFile("panorama_ext", new String[]{"fB", "scale", "offset", "pDir"}, true, false);
-                    break;
-                case PERSPECTIVE:
-                    indexShader = GLRenderer.inst.addShaderFromFile("perspective_ext", new String[]{"fA", "fB", "scale", "offset", "pDir"}, true, false);
-                    break;
-                case SINEWAVE:
-                    indexShader = GLRenderer.inst.addShaderFromFile("sinewave_ext", new String[]{"Zoom", "WaveIncrement", "Offset", "scale", "offset", "pDir"}, true, false);
-                    break;
-                case SINEOFFSET:
-                    indexShader = GLRenderer.inst.addShaderFromFile("sineoffset_ext", new String[]{"Zoom", "WaveIncrement", "Offset", "scale", "offset", "pDir"}, true, false);
-                    break;
-            }
-        }
-
-        if ((ho.ros.rsFlags & CRSpr.RSFLAG_VISIBLE) == 0) {
-            return;
-        }
-
-        CImage bgImage = null;
+        if (panoShader == -1) panoShader = GLRenderer.inst.addShaderFromFile("panorama_ext", new String[] {"fB", "pDir"}, true, false);
+        if (persShader == -1) persShader = GLRenderer.inst.addShaderFromFile("perspective_ext", new String[] {"fA", "fB", "pDir"}, true, false);
+        if (sineShader == -1) sineShader = GLRenderer.inst.addShaderFromFile("sinewave_ext", new String[] {"Zoom", "WaveIncrement", "Offset", "pDir"}, true, false);
+        if (offsShader == -1) offsShader = GLRenderer.inst.addShaderFromFile("sineoffset_ext", new String[] {"Zoom", "WaveIncrement", "Offset", "pDir"}, true, false);
 
         int objX = ho.hoX - rh.rhWindowX;
         int objY = ho.hoY - rh.rhWindowY;
         int objWidth = ho.hoImgWidth;
         int objHeight = ho.hoImgHeight;
 
-        float offsetX = 0.0f;
-        float offsetY = 0.0f;
-        float scaleY = 1.0f;
-        float scaleX = 1.0f;
-
-        //float WaveIncrement = (float)(SineWaveWaves * 360) / (float)objHeight;
-
         GLRenderer.inst.readFrameToTexture(imageTexture, objX, objY, objWidth, objHeight);
-        bgImage = imageTexture;
 
-        if (bgImage == null) {
+        if (imageTexture == null) {
             return;
         }
 
-        synchronized (bgImage) { synchronized (GLRenderer.inst) {
+        synchronized (imageTexture) { synchronized (GLRenderer.inst) {
             GLRenderer.inst.pushClip(objX, objY, objWidth, objHeight);
-            GLRenderer.inst.setEffectShader(indexShader);
 
             if (Effect == PANORAMA) {
-                if (!oncePano && Direction == HORIZONTAL) {
-                    //double sin = ((double) objHeight + (Math.sin(0.0d) * (double) ZoomValue)) - (double) ZoomValue;
-                    //GLRenderer.inst.updateVariable1f("fB", ((float) Math.max(1.0d, sin)) / ((float) Math.max(1.0d, ((double) objHeight + (Math.sin(1.5707963267948966d) * (double) ZoomValue)) - (double) ZoomValue)));
+                GLRenderer.inst.setEffectShader(panoShader);
+                
+                if (!oncePano) {
+                    int objSize = Direction == HORIZONTAL ? objHeight : objWidth;
 
-                    GLRenderer.inst.updateVariable1f("fB", Math.max(1.0f, (float)(objHeight - ZoomValue)) / Math.max(1.0f, (float)objHeight));
-                    GLRenderer.inst.updateVariable1i("pDir", 0);
-                    oncePano = true;
-                }
-                else if (!oncePano && Direction == VERTICAL) {
-                    //GLRenderer.inst.updateVariable1f("fB", ((float) Math.max(1.0, ((Math.sin(0.0d) * (double) ZoomValue) + (double) objWidth) - (double) ZoomValue)) / ((float) Math.max(1.0, ((double) objWidth + (Math.sin(1.5707963267948966d) * (double) ZoomValue)) - (double) ZoomValue)));
-
-                    GLRenderer.inst.updateVariable1f("fB", Math.max(1.0f, (float)(objWidth - ZoomValue)) / Math.max(1.0f, (float)objWidth));
-                    GLRenderer.inst.updateVariable1i("pDir", 1);
+                    GLRenderer.inst.updateVariable1f("fB", Math.max(1.0f, (float)(objSize - ZoomValue)) / Math.max(1.0f, (float)objSize));
+                    GLRenderer.inst.updateVariable1i("pDir", Direction);
                     oncePano = true;
                 }
             }
             else if (Effect == PERSPECTIVE) {
-                if (!oncePers) {
-                    double[] slope;
+                GLRenderer.inst.setEffectShader(persShader);
 
-                    if (PerspectiveDir == LEFTBOTTOM) {
-                        slope = LeftBottonSlope(ZoomValue, objWidth, objHeight, Direction);
-                    } else {
-                        slope = RightTopSlope(ZoomValue, objWidth, objHeight, Direction);
-                    }
+                if (!oncePers) {
+                    double[] slope = PerspectiveDir == LEFTBOTTOM
+                                        ? LeftBottonSlope(ZoomValue, objWidth, objHeight, Direction)
+                                        : RightTopSlope(ZoomValue, objWidth, objHeight, Direction);
 
                     if (Direction == HORIZONTAL) {
                         GLRenderer.inst.updateVariable1f("fA", (float) slope[1]);
@@ -260,52 +220,40 @@ public class CRunPerspective extends CRunExtension {
                         GLRenderer.inst.updateVariable1f("fB", (float) slope[1]);
                     }
 
-                    GLRenderer.inst.updateVariable1i("pDir", Direction == HORIZONTAL ? 0 : 1);
+                    GLRenderer.inst.updateVariable1i("pDir", Direction);
                     oncePers = true;
                 }
             }
             else if (Effect == SINEWAVE) {
-                if (!onceSine && Direction == HORIZONTAL) {
-                    GLRenderer.inst.updateVariable1f("Zoom", (float) ZoomValue / (float) objHeight);
-                    //GLRenderer.inst.updateVariable1f("WaveIncrement", WaveIncrement * (float) objWidth);
-                    GLRenderer.inst.updateVariable1f("WaveIncrement", ((float) (SineWaveWaves * 360) / (float) objHeight) * (float) objWidth);
-                    GLRenderer.inst.updateVariable1f("Offset", (float) Offset);
-                    GLRenderer.inst.updateVariable1i("pDir", 0);
-                    onceSine = true;
-                }
-                else if(!onceSine && Direction == VERTICAL) {
-                    GLRenderer.inst.updateVariable1f("Zoom", (float) ZoomValue / ((float) objWidth));
-                    //GLRenderer.inst.updateVariable1f("WaveIncrement", WaveIncrement * (float) objHeight);
-                    GLRenderer.inst.updateVariable1f("WaveIncrement", (float) (SineWaveWaves * 360));
-                    GLRenderer.inst.updateVariable1f("Offset", (float) Offset);
-                    GLRenderer.inst.updateVariable1i("pDir", 1);
+                GLRenderer.inst.setEffectShader(sineShader);
 
+                if (!onceSine) {
+                    int objSize1 = Direction == HORIZONTAL ? objHeight : objWidth;
+                    int objSize2 = Direction == HORIZONTAL ? objWidth : objHeight;
+
+                    GLRenderer.inst.updateVariable1f("Zoom", (float) ZoomValue / (float) objSize1);
+                    GLRenderer.inst.updateVariable1f("WaveIncrement", ((float) (SineWaveWaves * 360) / (float) objHeight) * (float) objSize2);
+                    GLRenderer.inst.updateVariable1f("Offset", (float) Offset);
+                    GLRenderer.inst.updateVariable1i("pDir", Direction);
                     onceSine = true;
                 }
             }
             else if (Effect == SINEOFFSET) {
-                if (!onceOffs && Direction == HORIZONTAL) {
-                    GLRenderer.inst.updateVariable1f("Zoom", (float) ZoomValue / (float) objHeight);
-                    GLRenderer.inst.updateVariable1f("WaveIncrement", (float) (SineWaveWaves * 360));
-                    GLRenderer.inst.updateVariable1f("Offset", (float) Offset);
+                GLRenderer.inst.setEffectShader(offsShader);
 
-                    GLRenderer.inst.updateVariable1i("pDir", 0);
-                    onceOffs = true;
-                }
-                else if (!onceOffs && Direction == VERTICAL) {
-                    GLRenderer.inst.updateVariable1f("Zoom", (float) ZoomValue / (float) objHeight);
-                    GLRenderer.inst.updateVariable1f("WaveIncrement", ((float) (SineWaveWaves * 360) / (float) objHeight) * (float) objWidth);
-                    GLRenderer.inst.updateVariable1f("Offset", (float) Offset);
+                if (!onceOffs) {
+                    int objSize = Direction == HORIZONTAL ? objHeight : objWidth;
 
-                    GLRenderer.inst.updateVariable1i("pDir", 1);
+                    GLRenderer.inst.updateVariable1f("Zoom", (float) ZoomValue / (float) objHeight);
+                    GLRenderer.inst.updateVariable1f("WaveIncrement", ((float) (SineWaveWaves * 360) / (float) objHeight) * (float) objSize);
+                    GLRenderer.inst.updateVariable1f("Offset", (float) Offset);
+                    GLRenderer.inst.updateVariable1i("pDir", Direction);
                     onceOffs = true;
                 }
             }
 
-            GLRenderer.inst.updateVariable2f("scale", scaleX, scaleY);
-            GLRenderer.inst.updateVariable2f("offset", offsetX, offsetY);
-            bgImage.setResampling(resample);
-            GLRenderer.inst.renderImage(bgImage, objX, objY, objWidth, objHeight, 0, 0);
+            imageTexture.setResampling(resample);
+            GLRenderer.inst.renderImage(imageTexture, objX, objY, objWidth, objHeight, 0, 0);
             GLRenderer.inst.removeEffectShader();
             GLRenderer.inst.popClip();
         } }
@@ -512,25 +460,19 @@ public class CRunPerspective extends CRunExtension {
     }
 
     private void actSetPanorama(CActExtension cActExtension) {
-        if (this.Effect != PANORAMA) {
-            this.bRemoveShader = true;
-        }
+        oncePano = false;
         this.Effect = PANORAMA;
         this.ho.roc.rcChanged = true;
     }
 
     private void actSetPerspective(CActExtension cActExtension) {
-        if (this.Effect != PERSPECTIVE) {
-            this.bRemoveShader = true;
-        }
+        oncePers = false;
         this.Effect = PERSPECTIVE;
         this.ho.roc.rcChanged = true;
     }
 
     private void actSetSineWave(CActExtension cActExtension) {
-        if (this.Effect != SINEWAVE) {
-            this.bRemoveShader = true;
-        }
+        onceSine = false;
         this.Effect = SINEWAVE;
         this.ho.roc.rcChanged = true;
     }
@@ -627,9 +569,7 @@ public class CRunPerspective extends CRunExtension {
     }
 
     private void actSetSineOffset(CActExtension cActExtension) {
-        if (this.Effect != SINEOFFSET) {
-            this.bRemoveShader = true;
-        }
+        onceOffs = false;
         this.Effect = SINEOFFSET;
         this.ho.roc.rcChanged = true;
     }
