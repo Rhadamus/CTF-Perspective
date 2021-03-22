@@ -209,17 +209,12 @@ public class CRunPerspective extends CRunExtension {
 
                 if (!oncePers) {
                     double[] slope = PerspectiveDir == LEFTBOTTOM
-                                        ? LeftBottonSlope(ZoomValue, objWidth, objHeight, Direction)
-                                        : RightTopSlope(ZoomValue, objWidth, objHeight, Direction);
+                                        ? LeftBottonSlope(ZoomValue, objSize)
+                                        : RightTopSlope(ZoomValue, objSize);
 
-                    if (Direction == HORIZONTAL) {
-                        GLRenderer.inst.updateVariable1f("fA", (float) slope[1]);
-                        GLRenderer.inst.updateVariable1f("fB", (float) slope[0]);
-                    } else {
-                        GLRenderer.inst.updateVariable1f("fA", (float) slope[0]);
-                        GLRenderer.inst.updateVariable1f("fB", (float) slope[1]);
-                    }
-
+                    
+                    GLRenderer.inst.updateVariable1f("fA", (float) slope[0]);
+                    GLRenderer.inst.updateVariable1f("fB", (float) slope[1]);
                     GLRenderer.inst.updateVariable1i("pDir", Direction);
                     oncePers = true;
                 }
@@ -257,37 +252,21 @@ public class CRunPerspective extends CRunExtension {
     }
 
     /* access modifiers changed from: package-private */
-    public double[] LeftBottonSlope(int zoom, int width, int height, int direction) {
+    public double[] LeftBottonSlope(int zoom, int size) {
         double[] slope = { 0.0, 0.0 };
 
-        switch (direction) {
-            case HORIZONTAL:
-                slope[0] = ((double) height + 0.5) / (double) height;
-                slope[1] = (((double) height / ((double) (zoom + height) / (double) height)) + 0.5) / (double) height;
-                break;
-            case VERTICAL:
-                slope[0] = ((double) width + 0.5) / (double) width;
-                slope[1] = (((double) width / ((double) (zoom + width) / (double) width)) + 0.5) / (double) width;
-                break;
-        }
+        slope[0] = ((double) size + 0.5) / (double) size;
+        slope[1] = (((double) size / ((double) (zoom + size) / (double) size)) + 0.5) / (double) size;
 
         return slope;
     }
 
     /* access modifiers changed from: package-private */
-    public double[] RightTopSlope(int zoom, int width, int height, int direction) {
+    public double[] RightTopSlope(int zoom, int size) {
         double[] slope = { 0.0, 0.0 };
 
-        switch (direction) {
-            case HORIZONTAL:
-                slope[0] = (((double) height / ((double) (zoom + height) / (double) height)) + 0.5) / (double) height;
-                slope[1] = ((double) height + 0.5) / (double) height;
-                break;
-            case VERTICAL:
-                slope[0] = (((double) width / ((double) (zoom + width) / (double) width)) + 0.5) / (double) width;
-                slope[1] = ((double) width + 0.5) / (double) width;
-                break;
-        }
+        slope[0] = (((double) size / ((double) (zoom + size) / (double) size)) + 0.5) / (double) size;
+        slope[1] = ((double) size + 0.5) / (double) size;
 
         return slope;
     }
