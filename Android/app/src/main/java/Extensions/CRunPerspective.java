@@ -71,10 +71,6 @@ public class CRunPerspective extends CRunExtension {
     private boolean resample;
 
     private CImage imageTexture;
-    private boolean onceOffs;
-    private boolean oncePano;
-    private boolean oncePers;
-    private boolean onceSine;
     private boolean paused;
 
     public CValue expRet = new CValue(0);
@@ -127,10 +123,6 @@ public class CRunPerspective extends CRunExtension {
         }
         this.imageTexture = new CImageTexture(this.ho.hoImgWidth, this.ho.hoImgHeight);
         this.paused = false;
-        this.oncePers = false;
-        this.oncePano = false;
-        this.onceSine = false;
-        this.onceOffs = false;
         return true;
     }
 
@@ -198,50 +190,35 @@ public class CRunPerspective extends CRunExtension {
             if (Effect == PANORAMA) {
                 GLRenderer.inst.setEffectShader(panoShader);
                 
-                if (!oncePano) {
-                    GLRenderer.inst.updateVariable1f("fB", Math.max(1.0f, (float)(objSize - ZoomValue)) / Math.max(1.0f, (float)objSize));
-                    GLRenderer.inst.updateVariable1i("pDir", Direction);
-                    oncePano = true;
-                }
+                GLRenderer.inst.updateVariable1f("fB", Math.max(1.0f, (float)(objSize - ZoomValue)) / Math.max(1.0f, (float)objSize));
+                GLRenderer.inst.updateVariable1i("pDir", Direction);
             }
             else if (Effect == PERSPECTIVE) {
                 GLRenderer.inst.setEffectShader(persShader);
 
-                if (!oncePers) {
-                    double[] slope = PerspectiveDir == LEFTBOTTOM
-                                        ? LeftBottonSlope(ZoomValue, objSize)
-                                        : RightTopSlope(ZoomValue, objSize);
-
-                    
-                    GLRenderer.inst.updateVariable1f("fA", (float) slope[0]);
-                    GLRenderer.inst.updateVariable1f("fB", (float) slope[1]);
-                    GLRenderer.inst.updateVariable1i("pDir", Direction);
-                    oncePers = true;
-                }
+                double[] slope = PerspectiveDir == LEFTBOTTOM
+                                    ? LeftBottonSlope(ZoomValue, objSize)
+                                    : RightTopSlope(ZoomValue, objSize);
+                GLRenderer.inst.updateVariable1f("fA", (float) slope[0]);
+                GLRenderer.inst.updateVariable1f("fB", (float) slope[1]);
+                GLRenderer.inst.updateVariable1i("pDir", Direction);
             }
             else if (Effect == SINEWAVE) {
                 GLRenderer.inst.setEffectShader(sineShader);
 
-                if (!onceSine) {
-                    int objSize2 = Direction == HORIZONTAL ? objWidth : objHeight;
-
-                    GLRenderer.inst.updateVariable1f("Zoom", (float) ZoomValue / (float) objSize);
-                    GLRenderer.inst.updateVariable1f("WaveIncrement", ((float) (SineWaveWaves * 360) / (float) objHeight) * (float) objSize2);
-                    GLRenderer.inst.updateVariable1f("Offset", (float) Offset);
-                    GLRenderer.inst.updateVariable1i("pDir", Direction);
-                    onceSine = true;
-                }
+                int objSize2 = Direction == HORIZONTAL ? objWidth : objHeight;
+                GLRenderer.inst.updateVariable1f("Zoom", (float) ZoomValue / (float) objSize);
+                GLRenderer.inst.updateVariable1f("WaveIncrement", ((float) (SineWaveWaves * 360) / (float) objHeight) * (float) objSize2);
+                GLRenderer.inst.updateVariable1f("Offset", (float) Offset);
+                GLRenderer.inst.updateVariable1i("pDir", Direction);
             }
             else if (Effect == SINEOFFSET) {
                 GLRenderer.inst.setEffectShader(offsShader);
 
-                if (!onceOffs) {
-                    GLRenderer.inst.updateVariable1f("Zoom", (float) ZoomValue / (float) objHeight);
-                    GLRenderer.inst.updateVariable1f("WaveIncrement", ((float) (SineWaveWaves * 360) / (float) objHeight) * (float) objSize);
-                    GLRenderer.inst.updateVariable1f("Offset", (float) Offset);
-                    GLRenderer.inst.updateVariable1i("pDir", Direction);
-                    onceOffs = true;
-                }
+                GLRenderer.inst.updateVariable1f("Zoom", (float) ZoomValue / (float) objHeight);
+                GLRenderer.inst.updateVariable1f("WaveIncrement", ((float) (SineWaveWaves * 360) / (float) objHeight) * (float) objSize);
+                GLRenderer.inst.updateVariable1f("Offset", (float) Offset);
+                GLRenderer.inst.updateVariable1i("pDir", Direction);
             }
 
             imageTexture.setResampling(resample);
@@ -380,27 +357,20 @@ public class CRunPerspective extends CRunExtension {
 
     private void actSetZoomValue(CActExtension cActExtension) {
         this.ZoomValue = cActExtension.getParamExpression(this.rh, 0);
-        oncePano = false;
-        oncePers = false;
-        onceSine = false;
-        onceOffs = false;
         this.ho.roc.rcChanged = true;
     }
 
     private void actSetPanorama(CActExtension cActExtension) {
-        oncePano = false;
         this.Effect = PANORAMA;
         this.ho.roc.rcChanged = true;
     }
 
     private void actSetPerspective(CActExtension cActExtension) {
-        oncePers = false;
         this.Effect = PERSPECTIVE;
         this.ho.roc.rcChanged = true;
     }
 
     private void actSetSineWave(CActExtension cActExtension) {
-        onceSine = false;
         this.Effect = SINEWAVE;
         this.ho.roc.rcChanged = true;
     }
@@ -411,15 +381,11 @@ public class CRunPerspective extends CRunExtension {
 
     private void actSetNumWaves(CActExtension cActExtension) {
         this.SineWaveWaves = cActExtension.getParamExpression(this.rh, 0);
-        onceSine = false;
-        onceOffs = false;
         this.ho.roc.rcChanged = true;
     }
 
     private void actSetOffset(CActExtension cActExtension) {
         this.Offset = cActExtension.getParamExpression(this.rh, 0);
-        onceSine = false;
-        onceOffs = false;
         this.ho.roc.rcChanged = true;
     }
 
@@ -433,10 +399,6 @@ public class CRunPerspective extends CRunExtension {
         }
 
         this.Direction = HORIZONTAL;
-        oncePano = false;
-        oncePers = false;
-        onceSine = false;
-        onceOffs = false;
         this.ho.roc.rcChanged = true;
     }
 
@@ -450,22 +412,16 @@ public class CRunPerspective extends CRunExtension {
         }
 
         this.Direction = VERTICAL;
-        oncePano = false;
-        oncePers = false;
-        onceSine = false;
-        onceOffs = false;
         this.ho.roc.rcChanged = true;
     }
 
     private void actSetLeftTop(CActExtension cActExtension) {
         this.PerspectiveDir = LEFTBOTTOM;
-        oncePers = false;
         this.ho.roc.rcChanged = true;
     }
 
     private void actSetRightBottom(CActExtension cActExtension) {
         this.PerspectiveDir = RIGHTTOP;
-        oncePers = false;
         this.ho.roc.rcChanged = true;
     }
 
@@ -500,7 +456,6 @@ public class CRunPerspective extends CRunExtension {
     }
 
     private void actSetSineOffset(CActExtension cActExtension) {
-        onceOffs = false;
         this.Effect = SINEOFFSET;
         this.ho.roc.rcChanged = true;
     }
