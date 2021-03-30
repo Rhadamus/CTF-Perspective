@@ -426,13 +426,15 @@ public class CRunPerspective extends CRunExtension {
     }
 
     private void actSetCustomValue(CActExtension cActExtension) {
-        int paramExpression = cActExtension.getParamExpression(this.rh, 0);
-        int paramExpression2 = cActExtension.getParamExpression(this.rh, 1);
-        int i = this.Direction == HORIZONTAL ? this.ho.hoImgWidth : this.ho.hoImgHeight;
-        if (paramExpression >= 0 && paramExpression2 < i) {
-            this.CustomArray[paramExpression] = paramExpression2;
+        int index = cActExtension.getParamExpression(rh, 0);
+        int value = cActExtension.getParamExpression(rh, 1);
+        int objSize = Direction == HORIZONTAL ? ho.hoImgWidth : ho.hoImgHeight;
+
+        if (index >= 0 && index < objSize) {
+            CustomArray[index] = value;
         }
-        this.ho.roc.rcChanged = true;
+
+        ho.roc.rcChanged = true;
     }
 
     private void actSetWidth(CActExtension cActExtension) {
