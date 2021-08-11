@@ -221,8 +221,8 @@ public class CRunPerspective extends CRunExtension {
                 GLRenderer.inst.updateVariable1i("pDir", Direction);
             }
 
-            imageTexture.setResampling(resample);
-            GLRenderer.inst.renderImage(imageTexture, objX, objY, objWidth, objHeight, 0, 0);
+            //imageTexture.setResampling(resample);
+            GLRenderer.inst.renderImage(imageTexture, resample, objX, objY, objWidth, objHeight, 0, 0);
             GLRenderer.inst.removeEffectShader();
             GLRenderer.inst.popClip();
         } }
