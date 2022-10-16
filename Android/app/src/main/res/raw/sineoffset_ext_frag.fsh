@@ -1,17 +1,17 @@
-precision highp float;
+#ifdef GL_ES
+	precision highp float;
+#endif
 
 varying mediump vec2 texCoordinate;
 uniform sampler2D texture;
 
-uniform lowp float inkParam;
 uniform lowp int inkEffect;
-uniform lowp vec3 rgbCoeff;
+uniform lowp vec4 blendColor;
 
 uniform float Zoom;
 uniform float WaveIncrement;
 uniform float Offset;
-
-uniform int pDir;
+uniform lowp int pDir;
 
 #define delta 3.141592/180.0
 
@@ -34,5 +34,5 @@ void main()
         posTex = (texCoordinate+ vec2(0.0, (2.0-2.0*ScreenY)/2.0));
     }
 
-    gl_FragColor = texture2D(texture, posTex) * vec4(rgbCoeff, inkParam);
+    gl_FragColor = texture2D(texture, posTex) * blendColor;
 }

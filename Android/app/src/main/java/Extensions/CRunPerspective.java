@@ -69,6 +69,7 @@ public class CRunPerspective extends CRunExtension {
     private int SineWaveWaves;
     private int[] CustomArray;
     private boolean resample;
+    private double[] slope = { 0.0, 0.0 };
 
     private CImage imageTexture;
     private boolean paused;
@@ -196,9 +197,15 @@ public class CRunPerspective extends CRunExtension {
             else if (Effect == PERSPECTIVE) {
                 GLRenderer.inst.setEffectShader(persShader);
 
-                double[] slope = PerspectiveDir == LEFTBOTTOM
-                                    ? LeftBottonSlope(ZoomValue, objSize)
-                                    : RightTopSlope(ZoomValue, objSize);
+                if (PerspectiveDir == LEFTBOTTOM) {
+                    slope[0] = ((double) objSize + 0.5) / (double) objSize;
+                    slope[1] = (((double) objSize / ((double) (ZoomValue + objSize) / (double) objSize)) + 0.5) / (double) objSize;
+                }
+                else {
+                    slope[0] = (((double) objSize / ((double) (ZoomValue + objSize) / (double) objSize)) + 0.5) / (double) objSize;
+                    slope[1] = ((double) objSize + 0.5) / (double) objSize;
+                }
+
                 GLRenderer.inst.updateVariable1f("fA", (float) slope[0]);
                 GLRenderer.inst.updateVariable1f("fB", (float) slope[1]);
                 GLRenderer.inst.updateVariable1i("pDir", Direction);
@@ -226,26 +233,6 @@ public class CRunPerspective extends CRunExtension {
             GLRenderer.inst.removeEffectShader();
             GLRenderer.inst.popClip();
         } }
-    }
-
-    /* access modifiers changed from: package-private */
-    public double[] LeftBottonSlope(int zoom, int size) {
-        double[] slope = { 0.0, 0.0 };
-
-        slope[0] = ((double) size + 0.5) / (double) size;
-        slope[1] = (((double) size / ((double) (zoom + size) / (double) size)) + 0.5) / (double) size;
-
-        return slope;
-    }
-
-    /* access modifiers changed from: package-private */
-    public double[] RightTopSlope(int zoom, int size) {
-        double[] slope = { 0.0, 0.0 };
-
-        slope[0] = (((double) size / ((double) (zoom + size) / (double) size)) + 0.5) / (double) size;
-        slope[1] = ((double) size + 0.5) / (double) size;
-
-        return slope;
     }
 
     /* access modifiers changed from: package-private */
