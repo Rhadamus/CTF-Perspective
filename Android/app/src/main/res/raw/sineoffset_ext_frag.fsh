@@ -34,5 +34,5 @@ void main()
         posTex = (texCoordinate+ vec2(0.0, (2.0-2.0*ScreenY)/2.0));
     }
 
-    gl_FragColor = texture2D(texture, posTex) * blendColor;
+    gl_FragColor = texture2D(texture, posTex);
 }

@@ -27,5 +27,5 @@ void main()
 		posTex = texCoordinate * vec2(fC, 1.0) + vec2((1.0-fC)/2.0, 0.0);
 	}
 	
-	gl_FragColor = texture2D(texture, posTex) * blendColor;
+	gl_FragColor = texture2D(texture, posTex);
 }

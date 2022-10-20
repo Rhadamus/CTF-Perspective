@@ -9,5 +9,5 @@ varying vec2 texCoordinate;
 void main()
 {
     texCoordinate = texCoord;
-    gl_Position = projectionMatrix * transformationMatrix * position;
+    gl_Position = projectionMatrix * position;
 }
