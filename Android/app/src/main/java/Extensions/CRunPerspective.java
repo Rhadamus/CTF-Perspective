@@ -90,7 +90,8 @@ public class CRunPerspective extends CRunExtension {
     public class CImageTexture extends CImage {
         public CImageTexture(int i, int i2) {
             Bitmap createBitmap = Bitmap.createBitmap(i, i2, Bitmap.Config.ARGB_8888);
-            allocNative2((MMFRuntime.inst.app.hdr2Options & 4096) != 0, (short)-1, CServices.getBitmapPixels(createBitmap), 0, 0, 0, 0, createBitmap.getWidth(), createBitmap.getHeight(), SurfaceView.ES);
+            allocNative2(-1, CServices.getBitmapPixels(createBitmap), 0, 0, 0, 0, createBitmap.getWidth(), createBitmap.getHeight(), SurfaceView.ES);
+            setResampling((MMFRuntime.inst.app.hdr2Options & 4096) != 0);
         }
 
         @Override // Banks.CImage
@@ -177,7 +178,7 @@ public class CRunPerspective extends CRunExtension {
         int objWidth = ho.hoImgWidth;
         int objHeight = ho.hoImgHeight;
 
-        GLRenderer.inst.readFrameToTexture(imageTexture, objX, objY, objWidth, objHeight);
+        GLRenderer.inst.readFrameToTexture(imageTexture, objX, objY, objWidth, objHeight, 0xFFFFFF, true);
 
         if (imageTexture == null) {
             return;
@@ -229,7 +230,7 @@ public class CRunPerspective extends CRunExtension {
             }
 
             //imageTexture.setResampling(resample);
-            GLRenderer.inst.renderImage(imageTexture, resample, objX, objY, objWidth, objHeight, 0, 0);
+            GLRenderer.inst.renderImage(imageTexture, resample, objX, objY, objWidth, objHeight, 0, 0, 0);
             GLRenderer.inst.removeEffectShader();
             GLRenderer.inst.popClip();
         } }
