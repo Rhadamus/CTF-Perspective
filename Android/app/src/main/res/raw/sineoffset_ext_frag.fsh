@@ -1,5 +1,9 @@
 #ifdef GL_ES
-	precision highp float;
+#if defined(GL_FRAGMENT_PRECISION_HIGH) || defined(GL_OES_standard_derivatives)
+precision highp float;
+#else
+precision mediump float;
+#endif
 #endif
 
 varying mediump vec2 texCoordinate;
@@ -15,19 +19,15 @@ uniform lowp int pDir;
 
 #define delta 3.141592/180.0
 
-void main()
-{
+void main() {
     mediump vec2 posTex;
 
-    if(pDir == 0)
-    {
+    if (pDir == 0) {
         mediump float y = 1.0 - texCoordinate.y;
 
         float ScreenX = 1.0 + sin((y*WaveIncrement+Offset)*delta)*Zoom;
         posTex = (texCoordinate + vec2((1.0-ScreenX)/2.0, 0.0));
-    }
-    else
-    {
+    } else {
         mediump float x = texCoordinate.x*WaveIncrement+Offset;
 
         float ScreenY = 1.0 - sin(x*delta)*Zoom;
